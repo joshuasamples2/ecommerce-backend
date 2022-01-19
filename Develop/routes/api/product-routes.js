@@ -21,27 +21,12 @@ router.get('/:id',async (req, res) => {
   // be sure to include its associated Category and Tag data
   try {
     const locationData = await Product.findByPk(req.params.id, {
-      include: [{ model: Product }]
+      include: [{ model: Product, model:Tag }]
     });
     if (!locationData) {
       res.status(404).json("Product not found");
       return;
     }
-    res.status(200).json(locationData);
-  } catch (err) {
-    res.status(500).json(err);
-  }
-});
-// get one product
-router.get('/:id', async (req, res) => {
-  try {
-    const locationData = await Product.findByPk(req.params.id, { include: [{ model: Category, model: Tag }] });
-
-    if (!locationData) {
-      res.status(404).json({ message: 'Product not found' });
-      return;
-    }
-
     res.status(200).json(locationData);
   } catch (err) {
     res.status(500).json(err);
@@ -103,9 +88,11 @@ router.put('/:id', (req, res) => {
             tag_id,
           };
         });
+              // figure out which ones to remove
       const productTagsToRemove = productTags
         .filter(({ tag_id }) => !req.body.tagIds.includes(tag_id))
         .map(({ id }) => id);
+              // run both actions
       return Promise.all([
         ProductTag.destroy({ where: { id: productTagsToRemove } }),
         ProductTag.bulkCreate(newProductTags),
